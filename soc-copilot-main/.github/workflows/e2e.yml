@@ -1,0 +1,194 @@
+name: E2E
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  api-e2e:
+    name: API end-to-end
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: soc
+          POSTGRES_PASSWORD: soc_ci_pw
+          POSTGRES_DB: soc_copilot
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U soc -d soc_copilot"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: apps/api/requirements.txt
+      - name: Install API dependencies
+        working-directory: apps/api
+        run: pip install -r requirements.txt
+      # Run migrations as a separate step so a schema failure surfaces clearly
+      # instead of getting buried in pytest output via the app's lifespan.
+      - name: Apply DB migrations
+        working-directory: apps/api
+        run: alembic upgrade head
+        env:
+          POSTGRES_USER: soc
+          POSTGRES_PASSWORD: soc_ci_pw
+          POSTGRES_DB: soc_copilot
+          POSTGRES_HOST: localhost
+          POSTGRES_PORT: "5432"
+      - name: Verify models match migrations
+        working-directory: apps/api
+        run: alembic check
+        env:
+          POSTGRES_USER: soc
+          POSTGRES_PASSWORD: soc_ci_pw
+          POSTGRES_DB: soc_copilot
+          POSTGRES_HOST: localhost
+          POSTGRES_PORT: "5432"
+      - name: Run E2E tests
+        working-directory: apps/api
+        run: pytest tests/test_e2e.py tests/test_e2e_wazuh.py tests/test_e2e_mfa.py tests/test_e2e_password_reset.py tests/test_migrations.py -v
+        env:
+          RUN_E2E: "1"
+          APP_ENV: development
+          POSTGRES_USER: soc
+          POSTGRES_PASSWORD: soc_ci_pw
+          POSTGRES_DB: soc_copilot
+          POSTGRES_HOST: localhost
+          POSTGRES_PORT: "5432"
+          JWT_SECRET: test-secret-32+chars-please-12345678
+          APP_ENCRYPTION_KEY: m24ERtIpLGYhHLZ_TeXqXnXRUZ9GlMM_hwdPTSCDPQM=
+          GEMINI_API_KEY: fake
+          RATE_LIMIT_ENABLED: "false"
+          # Legacy e2e tests log in with password only. MFA has its own
+          # module (test_e2e_mfa.py) that forces it on. Production refuses
+          # to start with MFA_REQUIRED=false.
+          MFA_REQUIRED: "false"
+
+  e2e-frontend:
+    name: Frontend end-to-end (Playwright)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: apps/web/package-lock.json
+
+      # docker compose loads ../.env; produce one with the values the stack
+      # needs to boot in CI. SERVER_LLM_DAILY_QUOTA is small so the wall test
+      # could exercise it if we ever switch to real backend calls.
+      - name: Write .env for compose
+        run: |
+          cat > .env <<'EOF'
+          GEMINI_API_KEY=fake
+          GEMINI_CHAT_MODEL=gemini-2.5-flash-lite
+          GEMINI_EMBED_MODEL=gemini-embedding-001
+          POSTGRES_USER=soc
+          POSTGRES_PASSWORD=soc_ci_pw
+          POSTGRES_DB=soc_copilot
+          POSTGRES_HOST=postgres
+          POSTGRES_PORT=5432
+          CHROMA_HOST=chroma
+          CHROMA_PORT=8000
+          API_HOST=0.0.0.0
+          API_PORT=8080
+          API_CORS_ORIGINS=http://localhost:13000
+          RATE_LIMIT_ENABLED=false
+          RATE_LIMIT_REQUESTS=20
+          RATE_LIMIT_WINDOW_SECONDS=60
+          JWT_SECRET=ci-secret-32+chars-please-12345678
+          JWT_TTL_SECONDS=3600
+          COOKIE_NAME=soc_session
+          COOKIE_SECURE=false
+          ALLOW_PUBLIC_REGISTRATION=true
+          APP_ENV=development
+          APP_ENCRYPTION_KEY=m24ERtIpLGYhHLZ_TeXqXnXRUZ9GlMM_hwdPTSCDPQM=
+          SERVER_LLM_DAILY_QUOTA=2
+          MFA_REQUIRED=false
+          NEXT_PUBLIC_API_URL=http://localhost:8080
+          NEXTAUTH_SECRET=ci-nextauth-secret-32+chars-1234567890
+          NEXTAUTH_URL=http://localhost:13000
+          EOF
+
+      - name: Bring up docker compose stack
+        run: docker compose -f infra/docker-compose.yml up -d --build
+
+      - name: Wait for API health
+        run: |
+          for i in $(seq 1 60); do
+            if curl -sf http://localhost:8080/api/health >/dev/null; then
+              echo "API up after ${i}s"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "API never came up — dumping logs"
+          docker compose -f infra/docker-compose.yml logs api
+          exit 1
+
+      - name: Wait for Next.js
+        run: |
+          for i in $(seq 1 90); do
+            if curl -sf http://localhost:13000/ >/dev/null; then
+              echo "Web up after ${i}s"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "Web never came up — dumping logs"
+          docker compose -f infra/docker-compose.yml logs web
+          exit 1
+
+      - name: Seed admin user
+        id: seed-admin
+        run: |
+          EMAIL="admin-ci-$(date +%s)@e2e.local"
+          PASSWORD="Test123456!"
+          curl -sf -X POST http://localhost:8080/api/auth/register \
+            -H "Content-Type: application/json" \
+            -d "{\"email\":\"$EMAIL\",\"password\":\"$PASSWORD\",\"name\":\"CIAdmin\"}" \
+            > /tmp/admin.json
+          cat /tmp/admin.json
+          echo "email=$EMAIL" >> "$GITHUB_OUTPUT"
+          echo "password=$PASSWORD" >> "$GITHUB_OUTPUT"
+
+      - name: Install web deps
+        working-directory: apps/web
+        run: npm ci
+
+      - name: Install Playwright browsers
+        working-directory: apps/web
+        run: npx playwright install --with-deps chromium
+
+      - name: Run Playwright tests
+        working-directory: apps/web
+        env:
+          E2E_API_URL: http://localhost:8080
+          E2E_WEB_URL: http://localhost:13000
+          E2E_ADMIN_EMAIL: ${{ steps.seed-admin.outputs.email }}
+          E2E_ADMIN_PASSWORD: ${{ steps.seed-admin.outputs.password }}
+        run: npm run e2e
+
+      - name: Upload Playwright report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: apps/web/playwright-report/
+          retention-days: 7
+
+      - name: Dump compose logs on failure
+        if: failure()
+        run: docker compose -f infra/docker-compose.yml logs --no-color

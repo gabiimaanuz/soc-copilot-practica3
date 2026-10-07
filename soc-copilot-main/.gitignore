@@ -1,0 +1,58 @@
+# Env
+.env
+.env.local
+.env.*.local
+*.pem
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+env/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Node
+node_modules/
+.next/
+out/
+dist/
+build/
+.turbo/
+.vercel/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.swp
+
+# Docker / data
+postgres-data/
+chroma-data/
+*.sqlite
+*.db
+
+# Playwright
+apps/web/playwright-report/
+apps/web/test-results/
+apps/web/blob-report/
+
+# Coverage
+coverage/
+.coverage
+htmlcov/
+
+# Obsidian (parent vault, but ignore if appears here)
+.obsidian/

@@ -1,0 +1,13 @@
+target-version = "py312"
+line-length = 100
+
+[lint]
+select = ["E", "F", "W", "I", "B", "UP", "RUF"]
+ignore = ["E501"]  # already enforced by line-length
+
+[lint.per-file-ignores]
+"__init__.py" = ["F401"]
+# FastAPI's `Depends(...)` and our `Depends(require_perm(...))` are the
+# idiomatic way to wire per-request dependencies; ruff's B008 doesn't
+# understand DI frameworks, so silence it where the pattern is expected.
+"app/routers/*.py" = ["B008"]

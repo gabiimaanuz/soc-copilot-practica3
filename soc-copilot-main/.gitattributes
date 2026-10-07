@@ -1,0 +1,16 @@
+* text=auto eol=lf
+
+# Binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.zip binary
+
+# Force LF on critical files (Docker, shell)
+Dockerfile text eol=lf
+*.sh text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf

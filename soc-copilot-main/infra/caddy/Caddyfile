@@ -1,0 +1,58 @@
+# Hetzner production reverse proxy. Local dev hits ports 3000/8080 directly.
+# PUBLIC_DOMAIN and ACME_EMAIL come from the prod compose env.
+{
+    email {$ACME_EMAIL:admin@example.com}
+    servers {
+        # We're the only proxy hop and we terminate XFF for the API. The
+        # API trusts X-Forwarded-For only when running in production, so
+        # there's no client-spoof path.
+        trusted_proxies static private_ranges
+    }
+}
+
+{$PUBLIC_DOMAIN:localhost} {
+    encode gzip zstd
+
+    # Defence-in-depth response headers. The API also sets these, but
+    # static assets served by Next.js benefit from belt-and-braces here.
+    header {
+        Strict-Transport-Security "max-age=63072000; includeSubDomains; preload"
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "DENY"
+        Referrer-Policy "no-referrer"
+        Permissions-Policy "geolocation=(), microphone=(), camera=()"
+        # Conservative CSP. Loosen `script-src`/`style-src` only if Next.js
+        # complains about inline chunks; prefer nonces/hashes over 'unsafe-*'.
+        Content-Security-Policy "default-src 'self'; img-src 'self' data: blob:; font-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'"
+        Cross-Origin-Opener-Policy "same-origin"
+        Cross-Origin-Resource-Policy "same-origin"
+        # Hide the upstream stack so we don't advertise versions.
+        -Server
+        -X-Powered-By
+    }
+
+    # Block obvious junk early (cheap, before any proxy work).
+    @bad_methods not method GET POST PUT PATCH DELETE OPTIONS HEAD
+    respond @bad_methods 405
+
+    @api path /api/*
+    handle @api {
+        reverse_proxy api:8080
+    }
+
+    handle {
+        reverse_proxy web:3000
+    }
+
+    # Per-request log to stdout — picked up by `docker logs` and forwarded
+    # by the json-file driver. Useful as a source for the SOC Copilot demo.
+    log {
+        output stdout
+        format json
+    }
+}
+
+# Redirect www → apex (and any other host) to the canonical domain.
+www.{$PUBLIC_DOMAIN:localhost} {
+    redir https://{$PUBLIC_DOMAIN:localhost}{uri} permanent
+}

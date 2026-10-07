@@ -1,0 +1,360 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>SOC Copilot — Mockup</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        fontFamily: {
+          sans: ['Inter', 'ui-sans-serif', 'system-ui'],
+          mono: ['JetBrains Mono', 'ui-monospace', 'SFMono-Regular'],
+        },
+        colors: {
+          ink: { 950:'#070b13', 900:'#0b1220', 850:'#0f172a', 800:'#131c2e', 700:'#1e293b' },
+          accent: { DEFAULT:'#22d3ee', soft:'#0e7490' },
+          risk: { low:'#22c55e', medium:'#eab308', high:'#f97316', critical:'#ef4444' }
+        },
+        boxShadow: {
+          glow: '0 0 0 1px rgba(34,211,238,.25), 0 8px 30px -12px rgba(34,211,238,.25)'
+        }
+      }
+    }
+  }
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  body { background: radial-gradient(ellipse at top, #0b1220 0%, #070b13 60%); }
+  .grid-bg {
+    background-image:
+      linear-gradient(rgba(34,211,238,.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(34,211,238,.04) 1px, transparent 1px);
+    background-size: 32px 32px;
+  }
+  .pulse-dot::before {
+    content:''; position:absolute; inset:-4px; border-radius:9999px;
+    background: rgba(34,197,94,.35); animation: ping 1.6s cubic-bezier(0,0,.2,1) infinite;
+  }
+  @keyframes ping { 75%,100% { transform: scale(2); opacity: 0; } }
+</style>
+</head>
+<body class="font-sans text-slate-200 min-h-screen grid-bg">
+
+<div class="flex min-h-screen">
+
+  <!-- SIDEBAR -->
+  <aside class="w-64 shrink-0 border-r border-ink-700 bg-ink-900/80 backdrop-blur-sm flex flex-col">
+    <div class="px-5 py-5 border-b border-ink-700 flex items-center gap-3">
+      <div class="w-9 h-9 rounded-lg bg-gradient-to-br from-cyan-400 to-cyan-700 flex items-center justify-center text-ink-950 font-bold">S</div>
+      <div>
+        <div class="font-semibold tracking-tight">SOC Copilot</div>
+        <div class="text-[11px] text-slate-500 font-mono">v0.4.2 · prod</div>
+      </div>
+    </div>
+
+    <nav class="px-3 py-4 space-y-1 text-sm">
+      <div class="px-3 pb-2 text-[10px] uppercase tracking-widest text-slate-500">Operación</div>
+      <a class="flex items-center gap-3 px-3 py-2 rounded-md bg-cyan-500/10 text-cyan-300 border border-cyan-500/20">
+        <span>▦</span> Dashboard
+        <span class="ml-auto text-[10px] font-mono text-cyan-300/70">⌘1</span>
+      </a>
+      <a class="flex items-center gap-3 px-3 py-2 rounded-md text-slate-300 hover:bg-ink-800">
+        <span>▲</span> Alertas <span class="ml-auto text-[10px] font-mono px-1.5 rounded bg-rose-500/20 text-rose-300">12</span>
+      </a>
+      <a class="flex items-center gap-3 px-3 py-2 rounded-md text-slate-300 hover:bg-ink-800">
+        <span>≡</span> Logs
+      </a>
+      <a class="flex items-center gap-3 px-3 py-2 rounded-md text-slate-300 hover:bg-ink-800">
+        <span>◈</span> Respond
+      </a>
+      <a class="flex items-center gap-3 px-3 py-2 rounded-md text-slate-300 hover:bg-ink-800">
+        <span>◐</span> Chat IA
+      </a>
+      <a class="flex items-center gap-3 px-3 py-2 rounded-md text-slate-300 hover:bg-ink-800">
+        <span>◷</span> Historial
+      </a>
+
+      <div class="px-3 pt-5 pb-2 text-[10px] uppercase tracking-widest text-slate-500">Sistema</div>
+      <a class="flex items-center gap-3 px-3 py-2 rounded-md text-slate-300 hover:bg-ink-800"><span>⚙</span> Settings</a>
+      <a class="flex items-center gap-3 px-3 py-2 rounded-md text-slate-300 hover:bg-ink-800"><span>◇</span> Admin</a>
+    </nav>
+
+    <div class="mt-auto m-3 rounded-lg border border-ink-700 bg-ink-850 p-3 text-xs">
+      <div class="flex items-center gap-2 mb-2">
+        <span class="relative inline-block w-2 h-2 rounded-full bg-emerald-400 pulse-dot"></span>
+        <span class="text-slate-300">Backend operativo</span>
+      </div>
+      <div class="font-mono text-slate-500 leading-5">
+        api &nbsp; · 142 ms<br>
+        chroma · 38 ms<br>
+        gemini · ok
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="flex-1 flex flex-col min-w-0">
+
+    <!-- TOPBAR -->
+    <header class="h-14 border-b border-ink-700 bg-ink-900/60 backdrop-blur flex items-center px-6 gap-4">
+      <div class="text-sm text-slate-400">
+        <span class="text-slate-500">SOC</span> <span class="text-slate-600">/</span> <span class="text-slate-200">Dashboard</span>
+      </div>
+      <div class="ml-6 flex items-center gap-2 px-3 py-1.5 rounded-md bg-ink-850 border border-ink-700 text-xs text-slate-400 w-96">
+        <span>⌕</span>
+        <input class="bg-transparent outline-none flex-1 placeholder:text-slate-600" placeholder="Buscar alerta, IP, hash, técnica MITRE…">
+        <span class="font-mono text-[10px] text-slate-600">⌘K</span>
+      </div>
+      <div class="ml-auto flex items-center gap-3">
+        <div class="text-xs flex items-center gap-2 px-3 py-1.5 rounded-md border border-ink-700 bg-ink-850">
+          <span class="text-slate-500">modelo</span>
+          <span class="text-cyan-300 font-medium">gemini-2.5-pro</span>
+          <span class="text-slate-600">▾</span>
+        </div>
+        <button class="relative w-9 h-9 rounded-md border border-ink-700 bg-ink-850 hover:bg-ink-800">
+          <span>⟳</span>
+          <span class="absolute -top-1 -right-1 text-[10px] bg-rose-500 text-white rounded-full w-4 h-4 flex items-center justify-center">3</span>
+        </button>
+        <div class="flex items-center gap-2 pl-3 border-l border-ink-700">
+          <div class="w-8 h-8 rounded-full bg-gradient-to-br from-cyan-500 to-violet-500 grid place-items-center text-xs font-bold">FR</div>
+          <div class="text-xs leading-tight">
+            <div class="text-slate-200">Fernando R.</div>
+            <div class="text-slate-500">analyst · jr</div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- CONTENT -->
+    <main class="p-6 space-y-6 overflow-auto">
+
+      <!-- HEADER STRIP -->
+      <div class="flex items-end justify-between">
+        <div>
+          <h1 class="text-2xl font-semibold tracking-tight text-slate-100">Centro de operaciones</h1>
+          <p class="text-sm text-slate-400">Resumen en vivo · últimas 24 h · vista global</p>
+        </div>
+        <div class="flex gap-2">
+          <button class="px-3 py-2 rounded-md text-xs border border-ink-700 bg-ink-850 hover:bg-ink-800">Exportar</button>
+          <button class="px-3 py-2 rounded-md text-xs bg-cyan-500 text-ink-950 font-medium hover:bg-cyan-400">+ Nueva alerta</button>
+        </div>
+      </div>
+
+      <!-- KPI ROW -->
+      <section class="grid grid-cols-4 gap-4">
+        <div class="rounded-xl border border-ink-700 bg-ink-900/60 p-4 hover:shadow-glow transition">
+          <div class="text-[11px] uppercase tracking-widest text-slate-500">Alertas 24h</div>
+          <div class="mt-1 flex items-baseline gap-2">
+            <div class="text-3xl font-semibold font-mono">247</div>
+            <div class="text-xs text-emerald-400">▲ 12%</div>
+          </div>
+          <div class="mt-3 h-8">
+            <svg viewBox="0 0 100 30" class="w-full h-full">
+              <polyline fill="none" stroke="#22d3ee" stroke-width="1.5"
+                points="0,22 10,18 20,20 30,12 40,15 50,8 60,11 70,6 80,10 90,5 100,9"/>
+            </svg>
+          </div>
+        </div>
+
+        <div class="rounded-xl border border-ink-700 bg-ink-900/60 p-4">
+          <div class="text-[11px] uppercase tracking-widest text-slate-500">Riesgo crítico</div>
+          <div class="mt-1 flex items-baseline gap-2">
+            <div class="text-3xl font-semibold font-mono text-rose-400">8</div>
+            <div class="text-xs text-rose-400">▲ 3</div>
+          </div>
+          <div class="mt-3 flex gap-1 h-2">
+            <div class="flex-1 rounded bg-risk-critical"></div>
+            <div class="flex-1 rounded bg-risk-high"></div>
+            <div class="flex-1 rounded bg-risk-high/70"></div>
+            <div class="flex-1 rounded bg-ink-700"></div>
+            <div class="flex-1 rounded bg-ink-700"></div>
+            <div class="flex-1 rounded bg-ink-700"></div>
+            <div class="flex-1 rounded bg-ink-700"></div>
+            <div class="flex-1 rounded bg-ink-700"></div>
+          </div>
+        </div>
+
+        <div class="rounded-xl border border-ink-700 bg-ink-900/60 p-4">
+          <div class="text-[11px] uppercase tracking-widest text-slate-500">MTTR medio</div>
+          <div class="mt-1 flex items-baseline gap-2">
+            <div class="text-3xl font-semibold font-mono">14<span class="text-slate-500 text-xl">m</span></div>
+            <div class="text-xs text-emerald-400">▼ 22%</div>
+          </div>
+          <div class="mt-2 text-xs text-slate-500">objetivo &lt; 20 m</div>
+        </div>
+
+        <div class="rounded-xl border border-ink-700 bg-ink-900/60 p-4">
+          <div class="text-[11px] uppercase tracking-widest text-slate-500">Cobertura MITRE</div>
+          <div class="mt-1 flex items-baseline gap-2">
+            <div class="text-3xl font-semibold font-mono">63<span class="text-slate-500 text-xl">%</span></div>
+            <div class="text-xs text-slate-400">87 / 138</div>
+          </div>
+          <div class="mt-3 h-1.5 rounded-full bg-ink-700 overflow-hidden">
+            <div class="h-full bg-gradient-to-r from-cyan-400 to-violet-500" style="width:63%"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 2-COL: chart + alerts feed -->
+      <section class="grid grid-cols-3 gap-4">
+        <div class="col-span-2 rounded-xl border border-ink-700 bg-ink-900/60 p-5">
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <h2 class="text-sm font-semibold text-slate-200">Volumen de alertas</h2>
+              <p class="text-xs text-slate-500">últimos 30 días · agrupado por severidad</p>
+            </div>
+            <div class="flex gap-1 text-[11px]">
+              <button class="px-2 py-1 rounded bg-ink-800 text-slate-300">24h</button>
+              <button class="px-2 py-1 rounded text-slate-500">7d</button>
+              <button class="px-2 py-1 rounded bg-cyan-500/10 text-cyan-300 border border-cyan-500/30">30d</button>
+            </div>
+          </div>
+          <div class="h-56 relative">
+            <svg viewBox="0 0 600 200" preserveAspectRatio="none" class="w-full h-full">
+              <defs>
+                <linearGradient id="grad" x1="0" x2="0" y1="0" y2="1">
+                  <stop offset="0%" stop-color="#22d3ee" stop-opacity=".4"/>
+                  <stop offset="100%" stop-color="#22d3ee" stop-opacity="0"/>
+                </linearGradient>
+              </defs>
+              <g stroke="#1e293b" stroke-dasharray="3 3">
+                <line x1="0" x2="600" y1="50" y2="50"/>
+                <line x1="0" x2="600" y1="100" y2="100"/>
+                <line x1="0" x2="600" y1="150" y2="150"/>
+              </g>
+              <path d="M0,150 L40,140 L80,120 L120,135 L160,90 L200,110 L240,70 L280,95 L320,55 L360,80 L400,40 L440,75 L480,30 L520,65 L560,45 L600,55 L600,200 L0,200 Z" fill="url(#grad)"/>
+              <polyline fill="none" stroke="#22d3ee" stroke-width="2"
+                points="0,150 40,140 80,120 120,135 160,90 200,110 240,70 280,95 320,55 360,80 400,40 440,75 480,30 520,65 560,45 600,55"/>
+            </svg>
+          </div>
+        </div>
+
+        <div class="rounded-xl border border-ink-700 bg-ink-900/60 p-5">
+          <div class="flex items-center justify-between mb-3">
+            <h2 class="text-sm font-semibold text-slate-200">Cola de triage</h2>
+            <span class="text-[11px] text-slate-500 font-mono">12 abiertas</span>
+          </div>
+          <ul class="space-y-2 text-xs">
+            <li class="rounded-lg border border-rose-500/30 bg-rose-500/5 p-3">
+              <div class="flex items-center justify-between mb-1">
+                <span class="font-mono text-rose-400">CRITICAL</span>
+                <span class="text-slate-500">hace 4 m</span>
+              </div>
+              <div class="text-slate-200">Ejecución sospechosa <span class="font-mono text-slate-400">powershell.exe -enc</span></div>
+              <div class="text-slate-500 mt-1 font-mono">T1059.001 · host: WS-042</div>
+            </li>
+            <li class="rounded-lg border border-orange-500/30 bg-orange-500/5 p-3">
+              <div class="flex items-center justify-between mb-1">
+                <span class="font-mono text-orange-400">HIGH</span>
+                <span class="text-slate-500">hace 11 m</span>
+              </div>
+              <div class="text-slate-200">Login fallido x57 desde <span class="font-mono">185.220.101.42</span></div>
+              <div class="text-slate-500 mt-1 font-mono">T1110 · user: admin</div>
+            </li>
+            <li class="rounded-lg border border-orange-500/30 bg-orange-500/5 p-3">
+              <div class="flex items-center justify-between mb-1">
+                <span class="font-mono text-orange-400">HIGH</span>
+                <span class="text-slate-500">hace 19 m</span>
+              </div>
+              <div class="text-slate-200">DNS sospechoso a dominio recién registrado</div>
+              <div class="text-slate-500 mt-1 font-mono">T1071.004 · src: 10.0.4.18</div>
+            </li>
+            <li class="rounded-lg border border-yellow-500/30 bg-yellow-500/5 p-3">
+              <div class="flex items-center justify-between mb-1">
+                <span class="font-mono text-yellow-400">MEDIUM</span>
+                <span class="text-slate-500">hace 33 m</span>
+              </div>
+              <div class="text-slate-200">USB no autorizado en endpoint contable</div>
+              <div class="text-slate-500 mt-1 font-mono">T1200 · host: FIN-007</div>
+            </li>
+          </ul>
+          <button class="mt-3 w-full text-xs text-cyan-400 hover:underline">Ver cola completa →</button>
+        </div>
+      </section>
+
+      <!-- 3-COL: distribution + mitre + ai -->
+      <section class="grid grid-cols-3 gap-4">
+
+        <div class="rounded-xl border border-ink-700 bg-ink-900/60 p-5">
+          <h2 class="text-sm font-semibold text-slate-200 mb-3">Distribución por riesgo</h2>
+          <div class="flex items-center gap-4">
+            <svg viewBox="0 0 36 36" class="w-28 h-28 -rotate-90">
+              <circle cx="18" cy="18" r="14" fill="none" stroke="#1e293b" stroke-width="4"/>
+              <circle cx="18" cy="18" r="14" fill="none" stroke="#ef4444" stroke-width="4" stroke-dasharray="14 88" stroke-dashoffset="0"/>
+              <circle cx="18" cy="18" r="14" fill="none" stroke="#f97316" stroke-width="4" stroke-dasharray="22 88" stroke-dashoffset="-14"/>
+              <circle cx="18" cy="18" r="14" fill="none" stroke="#eab308" stroke-width="4" stroke-dasharray="28 88" stroke-dashoffset="-36"/>
+              <circle cx="18" cy="18" r="14" fill="none" stroke="#22c55e" stroke-width="4" stroke-dasharray="24 88" stroke-dashoffset="-64"/>
+            </svg>
+            <ul class="text-xs space-y-1.5 flex-1">
+              <li class="flex justify-between"><span class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-risk-critical"></span>Crítico</span><span class="font-mono text-slate-300">8</span></li>
+              <li class="flex justify-between"><span class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-risk-high"></span>Alto</span><span class="font-mono text-slate-300">31</span></li>
+              <li class="flex justify-between"><span class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-risk-medium"></span>Medio</span><span class="font-mono text-slate-300">94</span></li>
+              <li class="flex justify-between"><span class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-risk-low"></span>Bajo</span><span class="font-mono text-slate-300">114</span></li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="rounded-xl border border-ink-700 bg-ink-900/60 p-5">
+          <h2 class="text-sm font-semibold text-slate-200 mb-3">Top técnicas MITRE</h2>
+          <ul class="space-y-2 text-xs">
+            <li>
+              <div class="flex justify-between mb-1"><span class="font-mono text-slate-300">T1059.001 PowerShell</span><span class="font-mono text-slate-400">42</span></div>
+              <div class="h-1.5 rounded bg-ink-700 overflow-hidden"><div class="h-full bg-cyan-400" style="width:90%"></div></div>
+            </li>
+            <li>
+              <div class="flex justify-between mb-1"><span class="font-mono text-slate-300">T1110 Brute Force</span><span class="font-mono text-slate-400">31</span></div>
+              <div class="h-1.5 rounded bg-ink-700 overflow-hidden"><div class="h-full bg-cyan-400/80" style="width:66%"></div></div>
+            </li>
+            <li>
+              <div class="flex justify-between mb-1"><span class="font-mono text-slate-300">T1071.004 DNS</span><span class="font-mono text-slate-400">22</span></div>
+              <div class="h-1.5 rounded bg-ink-700 overflow-hidden"><div class="h-full bg-cyan-400/70" style="width:48%"></div></div>
+            </li>
+            <li>
+              <div class="flex justify-between mb-1"><span class="font-mono text-slate-300">T1566 Phishing</span><span class="font-mono text-slate-400">17</span></div>
+              <div class="h-1.5 rounded bg-ink-700 overflow-hidden"><div class="h-full bg-cyan-400/60" style="width:36%"></div></div>
+            </li>
+            <li>
+              <div class="flex justify-between mb-1"><span class="font-mono text-slate-300">T1200 Hardware Add</span><span class="font-mono text-slate-400">9</span></div>
+              <div class="h-1.5 rounded bg-ink-700 overflow-hidden"><div class="h-full bg-cyan-400/50" style="width:20%"></div></div>
+            </li>
+          </ul>
+        </div>
+
+        <div class="rounded-xl border border-violet-500/30 bg-gradient-to-br from-violet-500/10 to-cyan-500/5 p-5 relative overflow-hidden">
+          <div class="absolute -right-6 -top-6 w-24 h-24 rounded-full bg-violet-500/20 blur-2xl"></div>
+          <div class="flex items-center gap-2 mb-3">
+            <span class="w-6 h-6 rounded-md bg-violet-500/30 grid place-items-center text-violet-300">✦</span>
+            <h2 class="text-sm font-semibold text-slate-100">Resumen del Copilot</h2>
+          </div>
+          <p class="text-xs text-slate-300 leading-relaxed">
+            Detecté un <span class="text-rose-300 font-medium">pico de fuerza bruta SSH</span> sobre <span class="font-mono text-slate-200">10.0.4.0/24</span>
+            en los últimos 40 min, correlacionado con
+            <span class="font-mono text-slate-200">T1110</span>. Recomiendo aislar
+            <span class="font-mono text-slate-200">WS-042</span> y bloquear la IP origen.
+          </p>
+          <div class="mt-3 flex gap-2">
+            <button class="text-[11px] px-2.5 py-1.5 rounded-md bg-cyan-500 text-ink-950 font-medium">Ejecutar playbook</button>
+            <button class="text-[11px] px-2.5 py-1.5 rounded-md border border-ink-700 text-slate-300">Ver razonamiento</button>
+          </div>
+          <div class="mt-3 text-[10px] text-slate-500 font-mono">conf: 0.92 · gemini-2.5-pro · 1.4s</div>
+        </div>
+
+      </section>
+
+      <!-- FOOTER -->
+      <div class="text-[11px] text-slate-600 font-mono pt-4 border-t border-ink-800 flex justify-between">
+        <span>SOC Copilot · Blue Team practice · 2026</span>
+        <span>tenant: evolve · region: hetzner-fsn1</span>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+</body>
+</html>

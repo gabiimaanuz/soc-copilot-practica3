@@ -1,0 +1,15 @@
+<!--
+  Bloque a añadir dentro de <ossec_config> en /var/ossec/etc/ossec.conf
+  del Wazuh MANAGER. Sustituye:
+    - hook_url → URL pública de SOC Copilot
+    - api_key  → mismo valor que WAZUH_WEBHOOK_TOKEN en el .env de SOC Copilot
+  <level> debe coincidir (o ser mayor) que WAZUH_MIN_RULE_LEVEL.
+  Después: systemctl restart wazuh-manager
+-->
+<integration>
+  <name>custom-soccopilot.py</name>
+  <hook_url>https://soc-copilot.duckdns.org/api/integrations/wazuh/webhook</hook_url>
+  <api_key>PEGA_AQUI_WAZUH_WEBHOOK_TOKEN</api_key>
+  <level>7</level>
+  <alert_format>json</alert_format>
+</integration>

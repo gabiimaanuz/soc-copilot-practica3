@@ -1,0 +1,24 @@
+{
+  "name": "soc-copilot",
+  "version": "1.0.0",
+  "description": "> IA Copilot para Analistas SOC Junior — Práctica 1 del Máster de > Ciberseguridad e IA (entrega 25-mayo-2026).",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/f3l0X/soc-copilot.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/f3l0X/soc-copilot/issues"
+  },
+  "homepage": "https://github.com/f3l0X/soc-copilot#readme"
+}

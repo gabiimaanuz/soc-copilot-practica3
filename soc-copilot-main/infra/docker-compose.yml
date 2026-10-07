@@ -1,0 +1,112 @@
+# ────────────────────────────────────────────────────────────────────────────
+# LOCAL / DEV stack.  Trade-offs vs production are intentional:
+#   • Postgres, Chroma and the API expose host ports so devs can poke them
+#     directly with `psql`, `curl`, the Chroma client, etc.
+#   • `web` runs the `dev` Dockerfile target → next dev with HMR.
+#   • `api` runs uvicorn with --reload (default in its Dockerfile CMD) and
+#     bind-mounts `apps/api/app` for live reload.
+#   • Default postgres credentials live in `.env`; rotate before any deploy.
+#
+# Production (Hetzner) uses a different file: see docker-compose.prod.example.yml.
+# ────────────────────────────────────────────────────────────────────────────
+name: soc-copilot
+
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    logging: *default-logging
+    env_file: ../.env
+    ports:
+      # Dev convenience: localhost:55432 → container 5432. Drop in prod.
+      # Bind to 127.0.0.1 so Postgres is never exposed on the LAN.
+      - "127.0.0.1:55432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./postgres/init.sql:/docker-entrypoint-initdb.d/00-init.sql:ro
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - pg_isready -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  chroma:
+    image: chromadb/chroma:0.5.23
+    restart: unless-stopped
+    logging: *default-logging
+    ports:
+      # Dev convenience. Drop in prod. Bound to loopback only.
+      - "127.0.0.1:8001:8000"
+    volumes:
+      - chroma-data:/data
+    environment:
+      IS_PERSISTENT: "TRUE"
+      PERSIST_DIRECTORY: /data
+      ANONYMIZED_TELEMETRY: "FALSE"
+
+  api:
+    build:
+      context: ../apps/api
+    restart: unless-stopped
+    logging: *default-logging
+    env_file: ../.env
+    environment:
+      POSTGRES_HOST: postgres
+      CHROMA_HOST: chroma
+    ports:
+      - "127.0.0.1:8080:8080"
+    volumes:
+      # Live-reload backend code without rebuilding the image.
+      - ../apps/api/app:/code/app
+      # Mount alembic so new migration files appear without rebuilding the image.
+      - ../apps/api/alembic:/code/alembic
+      # Mount tests + scripts read-only so `docker compose exec api pytest`
+      # and `... python -m scripts.ingest_kb` work without bind-mount flags.
+      - ../apps/api/tests:/code/tests:ro
+      - ../apps/api/scripts:/code/scripts:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+      chroma:
+        condition: service_started
+
+  web:
+    build:
+      context: ../apps/web
+      target: dev    # next dev (HMR). Prod uses target: runner.
+    restart: unless-stopped
+    logging: *default-logging
+    env_file: ../.env
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8080
+      INTERNAL_API_URL: http://api:8080
+      WATCHPACK_POLLING: "true"
+      CHOKIDAR_USEPOLLING: "true"
+    ports:
+      - "127.0.0.1:13500:3000"
+    volumes:
+      - ../apps/web/src:/app/src
+      - ../apps/web/public:/app/public
+      # Paleta de colores: sin este montaje los cambios de tailwind.config.ts
+      # solo se aplican tras reconstruir la imagen (--build).
+      - ../apps/web/tailwind.config.ts:/app/tailwind.config.ts:ro
+    depends_on:
+      - api
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/"]
+      interval: 30s
+      timeout: 5s
+      start_period: 30s
+      retries: 3
+
+volumes:
+  postgres-data:
+  chroma-data:
